@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Day Counter</title>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "Arial", sans-serif;
+      }
+
+      .day-counter {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2rem 3rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .day-counter .number {
+        font-size: 5rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        margin: 0.5rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="day-counter">
+      <div class="number" id="dayCount">0</div>
+    </div>
+    <script>
+      function calculateDaysPassed() {
+        const targetDate = new Date("2025-02-26");
+        const currentDate = new Date();
+
+        const timeDifference = currentDate - targetDate;
+        const daysPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+        document.getElementById("dayCount").textContent = daysPassed;
+      }
+
+      calculateDaysPassed();
+
+      setInterval(calculateDaysPassed, 1000);
+    </script>
+  </body>
+</html>
