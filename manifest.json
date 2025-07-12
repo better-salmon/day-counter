@@ -2,7 +2,7 @@
   "name": "Day Counter",
   "short_name": "DayCounter",
   "description": "A simple day counter application",
-  "start_url": "/",
+  "start_url": "/day-counter/",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",

@@ -1,5 +1,5 @@
-const CACHE_NAME = "day-counter-v1";
-const urlsToCache = ["/", "/index.html", "/manifest.json"];
+const CACHE_NAME = "day-counter-v2";
+const urlsToCache = ["/day-counter/", "/day-counter/index.html", "/day-counter/manifest.json"];
 
 // Install event - cache resources
 self.addEventListener("install", (event) => {
