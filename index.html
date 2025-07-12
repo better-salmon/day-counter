@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Day Counter</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Day Counter" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/day-counter/manifest.json" />
     <style>
       body {
         margin: 0;
@@ -42,18 +51,51 @@
     </div>
     <script>
       function calculateDaysPassed() {
-        const targetDate = new Date("2025-02-26");
+        const targetDate = new Date("2025-02-26T00:00:00");
         const currentDate = new Date();
 
         const timeDifference = currentDate - targetDate;
         const daysPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
 
         document.getElementById("dayCount").textContent = daysPassed;
+
+        // Update badge if service worker is available
+        if (
+          "serviceWorker" in navigator &&
+          navigator.serviceWorker.controller
+        ) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "UPDATE_BADGE",
+          });
+        }
+
+        return daysPassed;
+      }
+
+      // Register service worker
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/day-counter/sw.js")
+            .then((registration) => {
+              console.log("SW registered: ", registration);
+
+              // Update badge when service worker is ready
+              if (registration.active) {
+                registration.active.postMessage({
+                  type: "UPDATE_BADGE",
+                });
+              }
+            })
+            .catch((registrationError) => {
+              console.log("SW registration failed: ", registrationError);
+            });
+        });
       }
 
       calculateDaysPassed();
 
-      setInterval(calculateDaysPassed, 1000);
+      setInterval(calculateDaysPassed, 1000 * 60);
     </script>
   </body>
 </html>
