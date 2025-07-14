@@ -50,6 +50,52 @@
       <div class="number" id="dayCount">0</div>
     </div>
     <script>
+      // Request notification permissions for iOS badge support
+      async function requestNotificationPermission() {
+        // Check if notifications are supported
+        if (!("Notification" in window)) {
+          console.log("Notifications not supported");
+          return false;
+        }
+
+        // Check current permission
+        if (Notification.permission === "granted") {
+          return true;
+        }
+
+        // Request permission if not already granted
+        if (Notification.permission !== "denied") {
+          const permission = await Notification.requestPermission();
+          return permission === "granted";
+        }
+
+        return false;
+      }
+
+      // Update badge directly from main thread
+      async function updateBadge(dayCount) {
+        try {
+          // Check for badge API support
+          if (!navigator.setAppBadge) {
+            console.log("Badge API not supported");
+            return;
+          }
+
+          // For iOS, ensure we have notification permissions
+          const hasPermission = await requestNotificationPermission();
+          if (!hasPermission) {
+            console.log("Notification permission required for iOS badges");
+            return;
+          }
+
+          // Set the badge
+          await navigator.setAppBadge(Math.abs(dayCount));
+          console.log(`Badge updated: ${dayCount}`);
+        } catch (error) {
+          console.error("Error updating badge:", error);
+        }
+      }
+
       function calculateDaysPassed() {
         const targetDate = new Date("2025-02-26T00:00:00");
         const currentDate = new Date();
@@ -59,13 +105,17 @@
 
         document.getElementById("dayCount").textContent = daysPassed;
 
-        // Update badge if service worker is available
+        // Update badge directly from main thread
+        updateBadge(daysPassed);
+
+        // Also notify service worker
         if (
           "serviceWorker" in navigator &&
           navigator.serviceWorker.controller
         ) {
           navigator.serviceWorker.controller.postMessage({
             type: "UPDATE_BADGE",
+            dayCount: daysPassed,
           });
         }
 
@@ -74,22 +124,27 @@
 
       // Register service worker
       if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/day-counter/sw.js")
-            .then((registration) => {
-              console.log("SW registered: ", registration);
+        window.addEventListener("load", async () => {
+          try {
+            const registration = await navigator.serviceWorker.register(
+              "/day-counter/sw.js"
+            );
+            console.log("SW registered: ", registration);
 
-              // Update badge when service worker is ready
-              if (registration.active) {
-                registration.active.postMessage({
-                  type: "UPDATE_BADGE",
-                });
-              }
-            })
-            .catch((registrationError) => {
-              console.log("SW registration failed: ", registrationError);
-            });
+            // Request notification permissions on first load
+            await requestNotificationPermission();
+
+            // Update badge when service worker is ready
+            if (registration.active) {
+              const dayCount = calculateDaysPassed();
+              registration.active.postMessage({
+                type: "UPDATE_BADGE",
+                dayCount: dayCount,
+              });
+            }
+          } catch (registrationError) {
+            console.log("SW registration failed: ", registrationError);
+          }
         });
       }
 

@@ -1,5 +1,9 @@
 const CACHE_NAME = "day-counter-v2";
-const urlsToCache = ["/day-counter/", "/day-counter/index.html", "/day-counter/manifest.json"];
+const urlsToCache = [
+  "/day-counter/",
+  "/day-counter/index.html",
+  "/day-counter/manifest.json",
+];
 
 // Install event - cache resources
 self.addEventListener("install", (event) => {
@@ -30,19 +34,48 @@ function calculateDaysPassed() {
 }
 
 // Function to update the badge
-async function updateBadge() {
+async function updateBadge(dayCount = null) {
   try {
-    const dayCount = calculateDaysPassed();
-
-    // Update the badge if the Badging API is supported
-    if ("setAppBadge" in navigator) {
-      await navigator.setAppBadge(Math.abs(dayCount));
+    // Calculate days if not provided
+    if (dayCount === null) {
+      dayCount = calculateDaysPassed();
     }
 
-    // For debugging - you can remove this in production
+    // Check for badge API support using the recommended method
+    if (!navigator.setAppBadge) {
+      console.log("Badge API not supported");
+      return;
+    }
+
+    // Update the badge
+    await navigator.setAppBadge(Math.abs(dayCount));
     console.log(`Badge updated with day count: ${dayCount}`);
   } catch (error) {
     console.error("Error updating badge:", error);
+
+    // For iOS, if we get a permission error, clear the badge
+    if (error.name === "NotAllowedError") {
+      console.log("Badge permission denied - clearing badge");
+      try {
+        if (navigator.clearAppBadge) {
+          await navigator.clearAppBadge();
+        }
+      } catch (clearError) {
+        console.error("Error clearing badge:", clearError);
+      }
+    }
+  }
+}
+
+// Function to clear the badge
+async function clearBadge() {
+  try {
+    if (navigator.clearAppBadge) {
+      await navigator.clearAppBadge();
+      console.log("Badge cleared");
+    }
+  } catch (error) {
+    console.error("Error clearing badge:", error);
   }
 }
 
@@ -69,7 +102,7 @@ self.addEventListener("activate", (event) => {
 // Set up periodic badge updates
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "UPDATE_BADGE") {
-    updateBadge();
+    updateBadge(event.data.dayCount);
   }
 });
 
